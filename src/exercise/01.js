@@ -3,7 +3,7 @@
 
 import * as React from 'react'
 
-const Globe = React.lazy(import(/* webpackPrefetch: true */ '../globe'))
+const Globe = React.lazy(import(/* webpackPrefetch: true */ /* webpackChunkName: "globe" */ '../globe'))
 
 
 function App() {

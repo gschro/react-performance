@@ -20,11 +20,6 @@ const initialGrid = Array.from({length: 100}, () =>
 
 function appReducer(state, action) {
   switch (action.type) {
-    // we're no longer managing the dogName state in our reducer
-    // 💣 remove this case
-    case 'TYPED_IN_DOG_INPUT': {
-      return {...state, dogName: action.dogName}
-    }
     case 'UPDATE_GRID_CELL': {
       return {...state, grid: updateGridCellState(state.grid, action)}
     }
@@ -39,20 +34,20 @@ function appReducer(state, action) {
 
 function AppProvider({children}) {
   const [state, dispatch] = React.useReducer(appReducer, {
-    // 💣 remove the dogName state because we're no longer managing that
-    dogName: '',
     grid: initialGrid,
   })
-  const value = React.useState()
   return (
-    <AppDogContext.Provider value={value}>
-      <AppStateContext.Provider value={state}>
-        <AppDispatchContext.Provider value={dispatch}>
-          {children}
-        </AppDispatchContext.Provider>
-      </AppStateContext.Provider>
-    </AppDogContext.Provider>
+    <AppStateContext.Provider value={state}>
+      <AppDispatchContext.Provider value={dispatch}>
+        {children}
+      </AppDispatchContext.Provider>
+    </AppStateContext.Provider>
   )
+}
+
+function DogProvider({children}){
+  const dog = React.useState('')
+  return <AppDogContext.Provider value={dog}>{children}</AppDogContext.Provider>
 }
 
 function useAppState() {
@@ -147,12 +142,14 @@ function App() {
   return (
     <div className="grid-app">
       <button onClick={forceRerender}>force rerender</button>
-      <AppProvider>
         <div>
-          <DogNameInput />
-          <Grid />
+          <DogProvider>
+            <DogNameInput />
+          </DogProvider>
+          <AppProvider>
+            <Grid />
+          </AppProvider>
         </div>
-      </AppProvider>
     </div>
   )
 }

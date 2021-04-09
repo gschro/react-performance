@@ -11,6 +11,7 @@ import {
 } from '../utils'
 
 const AppStateContext = React.createContext()
+const AppDispatchContext = React.createContext()
 
 const initialGrid = Array.from({length: 100}, () =>
   Array.from({length: 100}, () => Math.random() * 100),
@@ -33,16 +34,17 @@ function appReducer(state, action) {
   }
 }
 
-function AppProvider({children}) {
+function AppProvider({value, children}) {
   const [state, dispatch] = React.useReducer(appReducer, {
     dogName: '',
     grid: initialGrid,
   })
-  const value = React.useMemo(() => [state, dispatch], [state])
   return (
-    <AppStateContext.Provider value={value}>
+    <AppDispatchContext.Provider value={dispatch}>
+    <AppStateContext.Provider value={state}>
       {children}
     </AppStateContext.Provider>
+    </AppDispatchContext.Provider>
   )
 }
 
@@ -54,8 +56,17 @@ function useAppState() {
   return context
 }
 
+function useAppDispatch() {
+  const context = React.useContext(AppDispatchContext)
+  if (!context) {
+    throw new Error('useAppDispatch must be used within the AppDispatchProvider')
+  }
+  return context
+}
+
+
 function Grid() {
-  const [, dispatch] = useAppState()
+  const dispatch = useAppDispatch()
   const [rows, setRows] = useDebouncedState(50)
   const [columns, setColumns] = useDebouncedState(50)
   const updateGridData = () => dispatch({type: 'UPDATE_GRID'})
@@ -73,7 +84,8 @@ function Grid() {
 Grid = React.memo(Grid)
 
 function Cell({row, column}) {
-  const [state, dispatch] = useAppState()
+  const state = useAppState()
+  const dispatch = useAppDispatch()
   const cell = state.grid[row][column]
   const handleClick = () => dispatch({type: 'UPDATE_GRID_CELL', row, column})
   return (
@@ -92,7 +104,8 @@ function Cell({row, column}) {
 Cell = React.memo(Cell)
 
 function DogNameInput() {
-  const [state, dispatch] = useAppState()
+  const state = useAppState()
+  const dispatch = useAppDispatch()
   const {dogName} = state
 
   function handleChange(event) {
@@ -123,12 +136,12 @@ function App() {
   return (
     <div className="grid-app">
       <button onClick={forceRerender}>force rerender</button>
-      <AppProvider>
-        <div>
-          <DogNameInput />
-          <Grid />
-        </div>
-      </AppProvider>
+        <AppProvider>
+          <div>
+            <DogNameInput />
+            <Grid />
+          </div>
+        </AppProvider>
     </div>
   )
 }

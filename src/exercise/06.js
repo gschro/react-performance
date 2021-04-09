@@ -12,6 +12,7 @@ import {
 
 const AppStateContext = React.createContext()
 const AppDispatchContext = React.createContext()
+const AppDogContext = React.createContext()
 
 const initialGrid = Array.from({length: 100}, () =>
   Array.from({length: 100}, () => Math.random() * 100),
@@ -19,6 +20,11 @@ const initialGrid = Array.from({length: 100}, () =>
 
 function appReducer(state, action) {
   switch (action.type) {
+    // we're no longer managing the dogName state in our reducer
+    // 💣 remove this case
+    case 'TYPED_IN_DOG_INPUT': {
+      return {...state, dogName: action.dogName}
+    }
     case 'UPDATE_GRID_CELL': {
       return {...state, grid: updateGridCellState(state.grid, action)}
     }
@@ -33,14 +39,19 @@ function appReducer(state, action) {
 
 function AppProvider({children}) {
   const [state, dispatch] = React.useReducer(appReducer, {
+    // 💣 remove the dogName state because we're no longer managing that
+    dogName: '',
     grid: initialGrid,
   })
+  const value = React.useState()
   return (
-    <AppStateContext.Provider value={state}>
-      <AppDispatchContext.Provider value={dispatch}>
-        {children}
-      </AppDispatchContext.Provider>
-    </AppStateContext.Provider>
+    <AppDogContext.Provider value={value}>
+      <AppStateContext.Provider value={state}>
+        <AppDispatchContext.Provider value={dispatch}>
+          {children}
+        </AppDispatchContext.Provider>
+      </AppStateContext.Provider>
+    </AppDogContext.Provider>
   )
 }
 
@@ -59,6 +70,15 @@ function useAppDispatch() {
   }
   return context
 }
+
+function useAppDog() {
+  const context = React.useContext(AppDogContext)
+  if (!context) {
+    throw new Error('useAppDog must be used within the AppProvider')
+  }
+  return context
+}
+
 
 function Grid() {
   const dispatch = useAppDispatch()
@@ -99,8 +119,7 @@ function Cell({row, column}) {
 Cell = React.memo(Cell)
 
 function DogNameInput() {
-  const [dogName, setDogName] = React.useState()
-
+  const [dogName, setDogName] = useAppDog()
   function handleChange(event) {
     const newDogName = event.target.value
     setDogName(newDogName)
